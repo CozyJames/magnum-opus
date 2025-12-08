@@ -20,6 +20,9 @@ import {
   FEATURE_WEIGHTS,
   QUALITY_THRESHOLDS,
   DEBUG_MODE,
+  MIN_HUMAN_CV,
+  MIN_DWELL_STDDEV,
+  MIN_FLIGHT_STDDEV,
 } from '../constants';
 
 // ============================================================================
@@ -181,27 +184,47 @@ export const extractTimings = (keystrokes: RawKeystroke[]): KeystrokeTimings => 
 
 /**
  * Calculate statistics for a single feature across multiple attempts
+ * Includes adaptive MAD smoothing for small sample sizes
  */
 const buildFeatureStats = (allValues: number[][]): FeatureStats => {
   const transposed = transpose(allValues);
-  
+  const sampleCount = allValues.length;
+
   const means: number[] = [];
   const mads: number[] = [];
   const mins: number[] = [];
   const maxs: number[] = [];
-  
+
+  // Calculate global MAD across all positions for smoothing
+  const allFlattened = allValues.flat();
+  const globalMean = mean(allFlattened);
+  const globalMAD = calculateMAD(allFlattened, globalMean);
+
   for (const positionValues of transposed) {
     // Remove outliers before computing stats
     const cleaned = removeOutliers(positionValues);
     const values = cleaned.length > 0 ? cleaned : positionValues;
-    
+
     const m = mean(values);
+    let positionMAD = calculateMAD(values, m);
+
+    // Adaptive smoothing for small samples (< 8 samples)
+    // Blend position-specific MAD with global MAD to prevent overfitting
+    if (sampleCount < 8 && globalMAD > 0) {
+      const smoothingFactor = Math.max(0, (8 - sampleCount) / 8); // 0-1
+      positionMAD = positionMAD * (1 - smoothingFactor * 0.3) +
+                    globalMAD * (smoothingFactor * 0.3);
+    }
+
+    // Ensure minimum MAD threshold
+    positionMAD = Math.max(positionMAD, MIN_MAD_THRESHOLD);
+
     means.push(m);
-    mads.push(calculateMAD(values, m));
+    mads.push(positionMAD);
     mins.push(Math.min(...values));
     maxs.push(Math.max(...values));
   }
-  
+
   return { mean: means, mad: mads, min: mins, max: maxs };
 };
 
@@ -296,14 +319,128 @@ export const buildProfile = (
 };
 
 // ============================================================================
+// LIVENESS / ANTI-BOT DETECTION
+// ============================================================================
+
+/**
+ * Check if typing pattern appears to be from a human (not a bot/replay)
+ * Returns a liveness score from 0 (definitely bot) to 1 (definitely human)
+ *
+ * Checks for:
+ * 1. Sufficient variance in dwell times
+ * 2. Sufficient variance in flight times
+ * 3. No suspiciously uniform patterns
+ */
+export const checkLiveness = (timings: KeystrokeTimings): {
+  isHuman: boolean;
+  score: number;
+  flags: string[];
+} => {
+  const flags: string[] = [];
+  let score = 1.0;
+
+  // Check 1: Dwell time variance
+  if (timings.dwellTimes.length >= 3) {
+    const dwellStd = stdDev(timings.dwellTimes);
+    const dwellMean = mean(timings.dwellTimes);
+
+    if (dwellStd < MIN_DWELL_STDDEV) {
+      flags.push('LOW_DWELL_VARIANCE');
+      score -= 0.4;
+    }
+
+    // Check coefficient of variation
+    if (dwellMean > 0) {
+      const cv = dwellStd / dwellMean;
+      if (cv < MIN_HUMAN_CV) {
+        flags.push('SUSPICIOUS_DWELL_CV');
+        score -= 0.3;
+      }
+    }
+  }
+
+  // Check 2: Flight time variance
+  if (timings.flightTimes.length >= 3) {
+    const flightStd = stdDev(timings.flightTimes);
+    const flightMean = mean(timings.flightTimes);
+
+    if (flightStd < MIN_FLIGHT_STDDEV) {
+      flags.push('LOW_FLIGHT_VARIANCE');
+      score -= 0.4;
+    }
+
+    if (flightMean > 0) {
+      const cv = flightStd / flightMean;
+      if (cv < MIN_HUMAN_CV) {
+        flags.push('SUSPICIOUS_FLIGHT_CV');
+        score -= 0.3;
+      }
+    }
+  }
+
+  // Check 3: Look for suspiciously repeating patterns
+  // (same timing repeated 3+ times in a row)
+  const checkRepeats = (arr: number[], tolerance: number = 5): boolean => {
+    for (let i = 0; i < arr.length - 2; i++) {
+      if (
+        Math.abs(arr[i] - arr[i + 1]) < tolerance &&
+        Math.abs(arr[i + 1] - arr[i + 2]) < tolerance
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (checkRepeats(timings.dwellTimes)) {
+    flags.push('REPEATING_DWELL_PATTERN');
+    score -= 0.2;
+  }
+
+  if (checkRepeats(timings.flightTimes)) {
+    flags.push('REPEATING_FLIGHT_PATTERN');
+    score -= 0.2;
+  }
+
+  score = Math.max(0, Math.min(1, score));
+
+  if (DEBUG_MODE && flags.length > 0) {
+    console.log('Liveness Check:', { score, flags });
+  }
+
+  return {
+    isHuman: score >= 0.5,
+    score,
+    flags,
+  };
+};
+
+// ============================================================================
 // MATCHING ALGORITHM — SCALED MANHATTAN DISTANCE
 // ============================================================================
 
 /**
+ * Convert distance score to user-friendly confidence percentage
+ * UNIFIED formula used everywhere in the app
+ *
+ * distance 0.0 → 100% (perfect match)
+ * distance 1.0 → 60%  (good match)
+ * distance 1.5 → 45%  (marginal)
+ * distance 2.0 → 33%  (poor)
+ * distance 2.5 → 25%  (very poor)
+ */
+export const distanceToConfidence = (distance: number): number => {
+  // Smooth exponential decay - более плавная кривая
+  // Формула: 100 / (1 + distance)^1.5
+  const confidence = 100 / Math.pow(1 + distance, 1.5);
+  return Math.round(clamp(confidence, 0, 100));
+};
+
+/**
  * Calculate Scaled Manhattan Distance between attempt and profile
- * 
+ *
  * Formula: score = (1/n) × Σ |attempt_i - mean_i| / MAD_i
- * 
+ *
  * This normalizes each feature by its expected variance (MAD),
  * making features with high natural variance contribute proportionally
  * less to the final score.
@@ -316,74 +453,83 @@ const scaledManhattan = (
 ): number => {
   // Берём минимальную длину — работаем с тем что есть
   const len = Math.min(attemptValues.length, profileMean.length, profileMAD.length);
-  
+
   if (len === 0) {
-    return 10; // Нет данных
+    return 10; // Нет данных — максимальный штраф
   }
-  
+
   let sum = 0;
-  const MIN_MAD = 40;
-  
+
   for (let i = 0; i < len; i++) {
-    const mad = Math.max(profileMAD[i] || MIN_MAD, MIN_MAD);
+    // Используем MIN_MAD_THRESHOLD из constants.ts
+    const mad = Math.max(profileMAD[i] || MIN_MAD_THRESHOLD, MIN_MAD_THRESHOLD);
     const attempt = attemptValues[i] || 0;
-    const mean = profileMean[i] || 0;
-    
-    const diff = Math.abs(attempt - mean);
+    const profileMeanVal = profileMean[i] || 0;
+
+    const diff = Math.abs(attempt - profileMeanVal);
+    // Ограничиваем максимальный штраф для одной позиции
     const penalty = Math.min(diff / mad, 3.0);
-    
+
     sum += penalty;
   }
-  
+
   return sum / len;
 };
 
 /**
  * Calculate match result between an attempt and a profile
- * Returns detailed scoring breakdown
+ * Returns detailed scoring breakdown including liveness check
  */
 export const calculateMatch = (
   timings: KeystrokeTimings,
   profile: BiometricProfile
 ): MatchResult => {
+  // Run liveness check first
+  const liveness = checkLiveness(timings);
+
   // Calculate per-feature scores
   const dwellScore = scaledManhattan(
     timings.dwellTimes,
     profile.dwell.mean,
     profile.dwell.mad
   );
-  
+
   const flightScore = scaledManhattan(
     timings.flightTimes,
     profile.flight.mean,
     profile.flight.mad
   );
-  
+
   const ddScore = scaledManhattan(
     timings.ddLatencies,
     profile.dd.mean,
     profile.dd.mad
   );
-  
+
   // Weighted combination
   const weights = FEATURE_WEIGHTS;
-  
+
   // Handle potential Infinity values
   const safeScores = {
     dwell: isFinite(dwellScore) ? dwellScore : 10,
     flight: isFinite(flightScore) ? flightScore : 10,
     dd: isFinite(ddScore) ? ddScore : 10,
   };
-  
-  const distance = 
+
+  let distance =
     safeScores.dwell * weights.dwell +
     safeScores.flight * weights.flight +
     safeScores.dd * weights.dd;
-  
-  // Convert distance to confidence (0-100%)
-  // distance 0 = 100%, distance 2 = 0%
-  const confidence = Math.max(0, Math.min(100, (1 - distance / 2.5) * 100));
-  
+
+  // Apply liveness penalty if bot-like behavior detected
+  // This increases distance (lowers confidence) for suspicious patterns
+  if (!liveness.isHuman) {
+    distance += (1 - liveness.score) * 1.5; // Up to +1.5 penalty
+  }
+
+  // Convert distance to confidence using unified formula
+  const confidence = distanceToConfidence(distance);
+
   if (DEBUG_MODE) {
     console.log('Match Scores:', {
       dwell: safeScores.dwell.toFixed(3),
@@ -391,9 +537,11 @@ export const calculateMatch = (
       dd: safeScores.dd.toFixed(3),
       weighted: distance.toFixed(3),
       confidence: confidence.toFixed(1) + '%',
+      liveness: liveness.score.toFixed(2),
+      flags: liveness.flags,
     });
   }
-  
+
   return {
     distance,
     confidence: Math.round(confidence * 10) / 10, // Round to 1 decimal
@@ -401,22 +549,13 @@ export const calculateMatch = (
     flightScore: safeScores.flight,
     ddScore: safeScores.dd,
     weights,
+    liveness,
   };
 };
 
 // ============================================================================
 // HELPER FUNCTIONS FOR UI
 // ============================================================================
-
-/**
- * Convert distance score to user-friendly confidence percentage
- */
-export const distanceToConfidence = (distance: number): number => {
-  // Exponential decay for more intuitive scaling
-  // distance 0 → 100%, distance 1 → ~60%, distance 2 → ~35%
-  const confidence = Math.exp(-distance * 0.7) * 100;
-  return Math.round(clamp(confidence, 0, 100));
-};
 
 /**
  * Get quality label from numeric score
