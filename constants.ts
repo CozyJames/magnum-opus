@@ -34,29 +34,40 @@ export const MIN_ANSWER_LENGTH = 4;
 // ============================================================================
 
 /**
- * Scaled Manhattan Distance interpretation:
- * - 0.0 = Perfect match (impossible in practice)
- * - 0.5 = Excellent match
- * - 1.0 = Good match (likely genuine user)
- * - 1.5 = Marginal match (needs verification)
- * - 2.0+ = Poor match (likely impostor)
- * 
- * These thresholds are calibrated based on:
- * - CMU Benchmark results (EER ~9.6% for Scaled Manhattan)
- * - Small user base assumption (≤10 users)
+ * Scaled Manhattan Distance interpretation (with new confidence formula):
+ * - distance 0.0 → 100% confidence (perfect match)
+ * - distance 0.4 → 60% confidence (very good)
+ * - distance 0.65 → 50% confidence (good, threshold for accept)
+ * - distance 1.0 → 35% confidence (marginal)
+ * - distance 1.3 → 28% confidence (poor, threshold for reject)
+ *
+ * These thresholds are calibrated for:
+ * - Small user base (≤10 users)
+ * - 5-sample calibration
  * - Balance between security and usability
  */
 
-// Primary authentication (mantra)
-export const THRESHOLD_ACCEPT = 1.0;      // Instant access granted
-export const THRESHOLD_CHALLENGE = 1.6;   // Requires secret question
-export const THRESHOLD_REJECT = 2.2;      // Instant reject
+// Primary authentication (mantra) - DISTANCE thresholds
+export const THRESHOLD_ACCEPT = 0.55;     // Instant access (≈55% confidence)
+export const THRESHOLD_CHALLENGE = 0.85;  // Requires secret question (≈42% confidence)
+export const THRESHOLD_REJECT = 1.1;      // Instant reject (≈32% confidence)
 
 // Challenge authentication (secret answer)
-export const CHALLENGE_THRESHOLD = 1.3;   // Must pass this after challenge
+export const CHALLENGE_THRESHOLD = 0.9;   // Must pass this after challenge
 
 // Combined score threshold (weighted average of mantra + answer)
-export const COMBINED_THRESHOLD = 1.2;
+export const COMBINED_THRESHOLD = 0.75;
+
+// ============================================================================
+// CONFIDENCE THRESHOLDS (alternative way to set thresholds)
+// ============================================================================
+
+/**
+ * Minimum confidence percentages for decisions
+ * These are checked IN ADDITION to distance thresholds
+ */
+export const MIN_CONFIDENCE_ACCEPT = 55;    // Need at least 55% to accept
+export const MIN_CONFIDENCE_CHALLENGE = 35; // Below 35% = instant reject
 
 // ============================================================================
 // FEATURE WEIGHTS

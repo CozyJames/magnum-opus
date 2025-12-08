@@ -18,6 +18,8 @@ import {
   THRESHOLD_REJECT,
   CHALLENGE_THRESHOLD,
   CHALLENGE_WEIGHTS,
+  MIN_CONFIDENCE_ACCEPT,
+  MIN_CONFIDENCE_CHALLENGE,
 } from '../constants';
 import { getUsers, resetDatabase } from '../services/storage';
 import { calculateMatch, distanceToConfidence } from '../services/biometrics';
@@ -107,11 +109,27 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
     console.log('Mantra Match:', {
       distance: match.distance.toFixed(3),
       confidence: match.confidence,
-      thresholds: { accept: THRESHOLD_ACCEPT, challenge: THRESHOLD_CHALLENGE },
+      thresholds: {
+        accept: `dist<${THRESHOLD_ACCEPT} AND conf>=${MIN_CONFIDENCE_ACCEPT}`,
+        challenge: `dist<${THRESHOLD_REJECT} AND conf>=${MIN_CONFIDENCE_CHALLENGE}`,
+        reject: `dist>=${THRESHOLD_REJECT} OR conf<${MIN_CONFIDENCE_CHALLENGE}`,
+      },
+      liveness: match.liveness.isHuman ? 'HUMAN' : 'BOT',
     });
-    
-    // Decision logic based on distance score
-    if (match.distance < THRESHOLD_ACCEPT) {
+
+    // Decision logic: check BOTH distance AND confidence
+    // Also check liveness - if bot detected, require challenge at minimum
+    const isAcceptable =
+      match.distance < THRESHOLD_ACCEPT &&
+      match.confidence >= MIN_CONFIDENCE_ACCEPT &&
+      match.liveness.isHuman;
+
+    const isRejectable =
+      match.distance > THRESHOLD_REJECT ||
+      match.confidence < MIN_CONFIDENCE_CHALLENGE ||
+      !match.liveness.isHuman && match.liveness.score < 0.3; // Definite bot
+
+    if (isAcceptable) {
       // High confidence - grant access immediately
       setResult({
         status: 'GRANTED',
@@ -121,9 +139,9 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
         userProfile: selectedUser,
       });
       setStage(LoginStage.RESULT);
-      
-    } else if (match.distance > THRESHOLD_REJECT) {
-      // Very low confidence - reject immediately
+
+    } else if (isRejectable) {
+      // Very low confidence or bot - reject immediately
       setResult({
         status: 'DENIED',
         confidence: match.confidence,
@@ -132,9 +150,9 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
         userProfile: selectedUser,
       });
       setStage(LoginStage.RESULT);
-      
+
     } else {
-      // Marginal confidence - require challenge
+      // Marginal confidence - require challenge (secret question)
       setStage(LoginStage.INPUT_CHALLENGE);
     }
   };
@@ -144,25 +162,33 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
    */
   const handleChallengeComplete = (timings: KeystrokeTimings, raw: RawKeystroke[]) => {
     if (!selectedUser || !mantraMatch) return;
-    
+
     // Calculate answer match
     const answerMatch = calculateMatch(timings, selectedUser.answerProfile);
-    
-    console.log('Answer Match:', {
-      distance: answerMatch.distance.toFixed(3),
-      confidence: answerMatch.confidence,
-    });
-    
+
     // Combined score (weighted average)
     const combinedDistance =
       mantraMatch.distance * CHALLENGE_WEIGHTS.mantra +
       answerMatch.distance * CHALLENGE_WEIGHTS.answer;
-    
+
     const combinedConfidence = distanceToConfidence(combinedDistance);
-    
-    // Decision based on combined score
-    const passed = combinedDistance < CHALLENGE_THRESHOLD;
-    
+
+    // Check both factors pass: distance AND confidence AND liveness
+    const distanceOk = combinedDistance < CHALLENGE_THRESHOLD;
+    const confidenceOk = combinedConfidence >= MIN_CONFIDENCE_CHALLENGE;
+    const livenessOk = answerMatch.liveness.isHuman || answerMatch.liveness.score >= 0.4;
+
+    const passed = distanceOk && confidenceOk && livenessOk;
+
+    console.log('Challenge Result:', {
+      mantraDistance: mantraMatch.distance.toFixed(3),
+      answerDistance: answerMatch.distance.toFixed(3),
+      combinedDistance: combinedDistance.toFixed(3),
+      combinedConfidence,
+      checks: { distanceOk, confidenceOk, livenessOk },
+      passed,
+    });
+
     setResult({
       status: passed ? 'GRANTED' : 'DENIED',
       confidence: combinedConfidence,
