@@ -1,0 +1,5 @@
+{
+  "name": "Magnum Opus",
+  "description": "Система биометрической аутентификации по клавиатурному почерку в стиле Cyberpunk.",
+  "requestFramePermissions": []
+}
