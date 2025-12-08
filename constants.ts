@@ -152,6 +152,34 @@ export const ANIMATION = {
 };
 
 // ============================================================================
+// ANTI-BOT / LIVENESS DETECTION
+// ============================================================================
+
+/**
+ * Minimum coefficient of variation (CV) expected from human typing
+ * CV = stdDev / mean
+ * Bots/replay attacks often have near-zero variance
+ */
+export const MIN_HUMAN_CV = 0.05; // 5% minimum variation expected
+
+/**
+ * Maximum percentage of "perfect" timings allowed
+ * Perfect = exactly matching profile within 5ms
+ */
+export const MAX_PERFECT_RATIO = 0.3; // Max 30% can be suspiciously perfect
+
+/**
+ * Minimum standard deviation of dwell times (ms)
+ * Human typing always has some variance
+ */
+export const MIN_DWELL_STDDEV = 8;
+
+/**
+ * Minimum standard deviation of flight times (ms)
+ */
+export const MIN_FLIGHT_STDDEV = 15;
+
+// ============================================================================
 // DEBUG MODE
 // ============================================================================
 

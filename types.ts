@@ -89,17 +89,24 @@ export interface MatchResult {
   // Overall score (lower = better match)
   distance: number;        // Scaled Manhattan distance
   confidence: number;      // Converted to 0-100% (higher = better)
-  
+
   // Per-feature breakdown
   dwellScore: number;      // Dwell time contribution
   flightScore: number;     // Flight time contribution
   ddScore: number;         // DD latency contribution
-  
+
   // Feature weights used
   weights: {
     dwell: number;
     flight: number;
     dd: number;
+  };
+
+  // Liveness / Anti-bot detection
+  liveness: {
+    isHuman: boolean;      // Did it pass liveness check?
+    score: number;         // 0-1, higher = more human-like
+    flags: string[];       // Any suspicious patterns detected
   };
 }
 

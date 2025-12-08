@@ -35,6 +35,8 @@ import {
   Loader2,
   WifiOff,
   Shield,
+  Bot,
+  UserCheck,
 } from 'lucide-react';
 
 interface LoginFlowProps {
@@ -166,7 +168,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
       confidence: combinedConfidence,
       mantraMatch,
       answerMatch,
-      mantraTimings,
+      mantraTimings: mantraTimings ?? undefined,
       answerTimings: timings,
       finalScore: combinedDistance,
       userProfile: selectedUser,
@@ -422,15 +424,37 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
               
               {/* Score breakdown */}
               {result.mantraMatch && (
-                <div className="mt-6 flex justify-center gap-6 text-xs font-mono">
-                  <div className="text-gray-500">
-                    Dwell: <span className="text-white">{result.mantraMatch.dwellScore.toFixed(2)}</span>
+                <div className="mt-6 flex flex-col items-center gap-4">
+                  {/* Feature scores */}
+                  <div className="flex justify-center gap-6 text-xs font-mono">
+                    <div className="text-gray-500">
+                      Dwell: <span className="text-white">{result.mantraMatch.dwellScore.toFixed(2)}</span>
+                    </div>
+                    <div className="text-gray-500">
+                      Flight: <span className="text-white">{result.mantraMatch.flightScore.toFixed(2)}</span>
+                    </div>
+                    <div className="text-gray-500">
+                      DD: <span className="text-white">{result.mantraMatch.ddScore.toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div className="text-gray-500">
-                    Flight: <span className="text-white">{result.mantraMatch.flightScore.toFixed(2)}</span>
-                  </div>
-                  <div className="text-gray-500">
-                    DD: <span className="text-white">{result.mantraMatch.ddScore.toFixed(2)}</span>
+
+                  {/* Liveness indicator */}
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono ${
+                    result.mantraMatch.liveness.isHuman
+                      ? 'bg-green-500/10 border border-green-500/30 text-green-400'
+                      : 'bg-red-500/10 border border-red-500/30 text-red-400'
+                  }`}>
+                    {result.mantraMatch.liveness.isHuman ? (
+                      <>
+                        <UserCheck size={14} />
+                        <span>HUMAN: {(result.mantraMatch.liveness.score * 100).toFixed(0)}%</span>
+                      </>
+                    ) : (
+                      <>
+                        <Bot size={14} />
+                        <span>BOT DETECTED: {result.mantraMatch.liveness.flags.join(', ')}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

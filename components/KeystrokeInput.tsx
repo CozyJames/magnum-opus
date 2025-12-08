@@ -366,12 +366,14 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
       </div>
       
       {/* Debug Info (hidden by default) */}
-      {false && avgDwell && (
+      {/* Uncomment for debugging:
+      {avgDwell !== null && (
         <div className="mt-4 p-2 bg-black/50 rounded text-xs font-mono text-gray-500">
-          Avg Dwell: {avgDwell.toFixed(0)}ms | 
+          Avg Dwell: {avgDwell.toFixed(0)}ms |
           Keystrokes: {keystrokesRef.current.length}
         </div>
       )}
+      */}
     </div>
   );
 };

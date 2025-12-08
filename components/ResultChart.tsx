@@ -19,7 +19,7 @@ import {
   Area,
 } from 'recharts';
 import { BiometricProfile, KeystrokeTimings, MatchResult } from '../types';
-import { ChevronDown, ChevronUp, Activity, Timer } from 'lucide-react';
+import { ChevronDown, ChevronUp, Activity, Timer, UserCheck, Bot } from 'lucide-react';
 
 interface ResultChartProps {
   title: string;
@@ -314,7 +314,7 @@ const ResultChart: React.FC<ResultChartProps> = ({
           </div>
           
           {/* Stats Summary */}
-          <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-3 gap-4 text-center">
+          <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-1">Dwell Score</p>
               <p className={`font-mono text-lg font-bold ${getScoreColor(matchResult.dwellScore)}`}>
@@ -332,6 +332,19 @@ const ResultChart: React.FC<ResultChartProps> = ({
               <p className={`font-mono text-lg font-bold ${getScoreColor(matchResult.ddScore)}`}>
                 {matchResult.ddScore.toFixed(3)}
               </p>
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-1">Liveness</p>
+              <div className={`font-mono text-lg font-bold flex items-center justify-center gap-1 ${
+                matchResult.liveness.isHuman ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {matchResult.liveness.isHuman ? (
+                  <UserCheck size={16} />
+                ) : (
+                  <Bot size={16} />
+                )}
+                {(matchResult.liveness.score * 100).toFixed(0)}%
+              </div>
             </div>
           </div>
           
