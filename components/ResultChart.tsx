@@ -63,29 +63,36 @@ const ResultChart: React.FC<ResultChartProps> = ({
   const [expanded, setExpanded] = useState(true);
   const [mode, setMode] = useState<ChartMode>('combined');
 
-  // Prepare dwell data
+  // Use profile.targetText as canonical source for character labels
+  const targetChars = profile.targetText.split('');
+
+  // Prepare dwell data - use all characters from profile
   const dwellLength = Math.min(
-    attempt.chars.length,
+    profile.dwell.mean.length,
     attempt.dwellTimes.length,
-    profile.dwell.mean.length
+    targetChars.length
   );
   const dwellData = Array.from({ length: dwellLength }, (_, i) => ({
-    name: attempt.chars[i] || `${i}`,
-    profile: profile.dwell.mean[i] || 0,
-    attempt: attempt.dwellTimes[i] || 0,
+    name: targetChars[i] === ' ' ? '␣' : targetChars[i],
+    profile: profile.dwell.mean[i] ?? 0,
+    attempt: attempt.dwellTimes[i] ?? 0,
   }));
 
   // Prepare flight data
   const flightLength = Math.min(
-    attempt.chars.length - 1,
+    profile.flight.mean.length,
     attempt.flightTimes.length,
-    profile.flight.mean.length
+    targetChars.length - 1
   );
-  const flightData = Array.from({ length: flightLength }, (_, i) => ({
-    name: `${attempt.chars[i]}→${attempt.chars[i + 1]}`,
-    profile: profile.flight.mean[i] || 0,
-    attempt: attempt.flightTimes[i] || 0,
-  }));
+  const flightData = Array.from({ length: flightLength }, (_, i) => {
+    const char1 = targetChars[i] === ' ' ? '␣' : targetChars[i];
+    const char2 = targetChars[i + 1] === ' ' ? '␣' : targetChars[i + 1];
+    return {
+      name: `${char1}→${char2}`,
+      profile: profile.flight.mean[i] ?? 0,
+      attempt: attempt.flightTimes[i] ?? 0,
+    };
+  });
 
   const getScoreColor = (score: number): string => {
     if (score < 0.8) return 'text-success';
