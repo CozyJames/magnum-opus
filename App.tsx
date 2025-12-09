@@ -1,67 +1,71 @@
 // ============================================================================
 // MAGNUM OPUS v3.0 — Main Application Component
-// Keystroke Dynamics Biometric Authentication System
+// Система биометрической аутентификации | МИРЭА, Кафедра КБ-1
 // ============================================================================
 
 import React, { useState } from 'react';
 import { AppState } from './types';
 import RegistrationFlow from './components/RegistrationFlow';
 import LoginFlow from './components/LoginFlow';
-import { Fingerprint, UserPlus, LogIn, Activity } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.HOME);
 
   return (
-    <div className="min-h-screen text-zinc-100 font-sans flex flex-col">
+    <div className="min-h-screen bg-light-100 text-light-900 font-sans flex flex-col">
       {/* Main Content */}
       <div className="flex-grow flex flex-col">
         {appState === AppState.HOME ? (
-          <div className="flex-grow flex flex-col items-center justify-center px-4 animate-fade-in">
-            {/* Logo & Title */}
-            <div className="text-center mb-16">
-              <div className="w-20 h-20 rounded-2xl bg-dark-800 border border-dark-600 flex items-center justify-center mx-auto mb-8">
-                <Fingerprint className="w-10 h-10 text-accent-primary" />
-              </div>
+          <div className="flex-grow flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
+            {/* University Logo */}
+            <div className="mb-6">
+              <img
+                src="/i.png"
+                alt="МИРЭА"
+                className="w-24 h-24 object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
 
-              <h1 className="text-4xl font-semibold text-white tracking-tight mb-3">
+            {/* Title */}
+            <div className="text-center mb-10">
+              <h1 className="text-3xl font-bold text-light-900 mb-2">
                 Magnum Opus
               </h1>
-
-              <p className="text-zinc-500 text-sm max-w-md mx-auto leading-relaxed">
-                Биометрическая аутентификация на основе клавиатурной динамики
+              <p className="text-lg text-light-600 mb-1">
+                Система биометрической аутентификации
+              </p>
+              <p className="text-base text-light-500">
+                по клавиатурному почерку
               </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md mb-12">
               <button
                 onClick={() => setAppState(AppState.LOGIN)}
-                className="flex-1 group flex items-center justify-center gap-3 bg-accent-primary hover:bg-accent-muted text-white px-6 py-4 rounded-xl font-medium transition-all"
+                className="flex-1 flex items-center justify-center gap-3 bg-primary-600 hover:bg-primary-700 text-white px-8 py-4 rounded-lg font-medium text-lg shadow-sm"
               >
-                <LogIn size={20} />
+                <LogIn size={22} />
                 <span>Войти</span>
               </button>
 
               <button
                 onClick={() => setAppState(AppState.REGISTER)}
-                className="flex-1 group flex items-center justify-center gap-3 bg-dark-700 hover:bg-dark-600 text-zinc-300 hover:text-white px-6 py-4 rounded-xl font-medium border border-dark-600 transition-all"
+                className="flex-1 flex items-center justify-center gap-3 bg-white hover:bg-light-200 text-light-700 px-8 py-4 rounded-lg font-medium text-lg border border-light-300 shadow-sm"
               >
-                <UserPlus size={20} />
+                <UserPlus size={22} />
                 <span>Регистрация</span>
               </button>
             </div>
 
-            {/* Features */}
-            <div className="mt-16 flex items-center gap-8 text-zinc-600 text-xs">
-              <div className="flex items-center gap-2">
-                <Activity size={14} />
-                <span>Scaled Manhattan Distance</span>
-              </div>
-              <div className="w-1 h-1 rounded-full bg-zinc-700" />
-              <div>Liveness Detection</div>
-              <div className="w-1 h-1 rounded-full bg-zinc-700" />
-              <div>v3.0</div>
+            {/* University Info */}
+            <div className="text-center text-light-500 text-sm space-y-1">
+              <p className="font-medium text-light-700">МИРЭА — Российский технологический университет</p>
+              <p>Кафедра КБ-1</p>
             </div>
           </div>
         ) : (
@@ -81,12 +85,15 @@ const App: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-4 px-6 flex justify-between items-center text-xs text-zinc-600 border-t border-dark-800">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse-soft" />
-          <span>System Online</span>
+      <footer className="py-4 px-6 border-t border-light-300 bg-white">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-light-500">
+          <div>
+            Разработчики: Ланцков Д., Мусаев М., Соболев И.
+          </div>
+          <div className="text-light-400">
+            МИРЭА, 2024
+          </div>
         </div>
-        <div>Magnum Opus Security</div>
       </footer>
     </div>
   );

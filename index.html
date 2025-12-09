@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Magnum Opus | Biometric Auth</title>
-    <meta name="description" content="Keystroke Dynamics Biometric Authentication System" />
+    <title>Magnum Opus | МИРЭА</title>
+    <meta name="description" content="Система биометрической аутентификации по клавиатурному почерку" />
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Fonts - Inter for clean UI -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Fonts - Simple readable fonts for 30-40+ -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- Tailwind Configuration -->
     <script>
@@ -18,35 +18,45 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Inter', 'system-ui', 'sans-serif'],
-              mono: ['"JetBrains Mono"', 'monospace'],
+              sans: ['Roboto', 'system-ui', 'sans-serif'],
+              mono: ['"Roboto Mono"', 'monospace'],
             },
             colors: {
-              // Clean dark palette
-              dark: {
-                950: '#09090b',
-                900: '#0c0c0f',
-                800: '#131318',
-                700: '#1a1a21',
-                600: '#25252d',
-                500: '#3f3f46',
+              // Light theme palette
+              light: {
+                50: '#ffffff',
+                100: '#f8fafc',
+                200: '#f1f5f9',
+                300: '#e2e8f0',
+                400: '#cbd5e1',
+                500: '#94a3b8',
+                600: '#64748b',
+                700: '#475569',
+                800: '#334155',
+                900: '#1e293b',
               },
-              // Accent colors - muted and elegant
-              accent: {
-                primary: '#6366f1',    // Indigo
-                secondary: '#8b5cf6',  // Violet
-                muted: '#4f46e5',
+              // MIREA blue accent
+              primary: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                200: '#bfdbfe',
+                300: '#93c5fd',
+                400: '#60a5fa',
+                500: '#3b82f6',
+                600: '#2563eb',
+                700: '#1d4ed8',
+                800: '#1e40af',
+                900: '#1e3a8a',
               },
               // Semantic colors
-              success: '#10b981',
-              warning: '#f59e0b',
-              danger: '#ef4444',
-              info: '#3b82f6',
+              success: '#16a34a',
+              warning: '#ca8a04',
+              danger: '#dc2626',
+              info: '#2563eb',
             },
             animation: {
-              'fade-in': 'fadeIn 0.4s ease-out forwards',
-              'slide-up': 'slideUp 0.4s ease-out forwards',
-              'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+              'fade-in': 'fadeIn 0.3s ease-out forwards',
+              'slide-up': 'slideUp 0.3s ease-out forwards',
             },
             keyframes: {
               fadeIn: {
@@ -54,13 +64,9 @@
                 '100%': { opacity: '1' },
               },
               slideUp: {
-                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '0%': { opacity: '0', transform: 'translateY(8px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
               },
-              pulseSoft: {
-                '0%, 100%': { opacity: '1' },
-                '50%': { opacity: '0.7' },
-              }
             }
           }
         }
@@ -75,35 +81,30 @@
       }
 
       body {
-        background-color: #09090b;
-        color: #fafafa;
+        background-color: #f8fafc;
+        color: #1e293b;
       }
 
-      /* Subtle gradient background */
-      .bg-gradient-dark {
-        background: linear-gradient(180deg, #09090b 0%, #0c0c0f 50%, #131318 100%);
-      }
-
-      /* Custom Scrollbar - minimal */
+      /* Custom Scrollbar */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: transparent;
+        background: #f1f5f9;
       }
       ::-webkit-scrollbar-thumb {
-        background: #3f3f46;
+        background: #cbd5e1;
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #52525b;
+        background: #94a3b8;
       }
 
       /* Selection */
       ::selection {
-        background-color: rgba(99, 102, 241, 0.3);
-        color: white;
+        background-color: rgba(37, 99, 235, 0.2);
+        color: #1e3a8a;
       }
 
       /* Focus states */
@@ -111,26 +112,26 @@
         outline: none;
       }
       *:focus-visible {
-        outline: 2px solid #6366f1;
+        outline: 2px solid #3b82f6;
         outline-offset: 2px;
       }
 
-      /* Smooth transitions globally */
+      /* Smooth transitions */
       button, a, input {
-        transition: all 0.2s ease;
+        transition: all 0.15s ease;
       }
 
-      /* Recharts customization */
+      /* Recharts customization for light theme */
       .recharts-default-tooltip {
-        background: #131318 !important;
-        border: 1px solid #25252d !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
         border-radius: 8px !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
       }
     </style>
   </head>
 
-  <body class="bg-gradient-dark min-h-screen">
+  <body class="min-h-screen bg-light-100">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

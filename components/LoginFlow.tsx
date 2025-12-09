@@ -1,6 +1,5 @@
 // ============================================================================
-// MAGNUM OPUS v3.0 — Login Flow
-// Biometric authentication with challenge support
+// MAGNUM OPUS v3.0 — Login Flow (Light Theme)
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -32,9 +31,6 @@ import {
   XCircle,
   AlertTriangle,
   Trash2,
-  Shield,
-  UserCheck,
-  Bot,
 } from 'lucide-react';
 
 interface LoginFlowProps {
@@ -170,30 +166,28 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
     setStage(LoginStage.SELECT_USER);
   };
 
-  // Loading
   if (isLoading && stage === LoginStage.SELECT_USER) {
     return (
       <div className="flex-grow flex items-center justify-center">
-        <Loader2 className="animate-spin text-zinc-500" size={32} />
+        <Loader2 className="animate-spin text-primary-500" size={40} />
       </div>
     );
   }
 
-  // Empty state
   if (users.length === 0 && stage === LoginStage.SELECT_USER) {
     return (
       <div className="flex-grow flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-2xl bg-dark-800 border border-dark-600 flex items-center justify-center mx-auto mb-6">
-            <User className="w-8 h-8 text-zinc-500" />
+          <div className="w-20 h-20 rounded-full bg-light-200 flex items-center justify-center mx-auto mb-6">
+            <User className="w-10 h-10 text-light-400" />
           </div>
-          <h3 className="text-xl font-medium text-white mb-2">Нет пользователей</h3>
-          <p className="text-zinc-500 text-sm mb-6">
+          <h3 className="text-xl font-semibold text-light-900 mb-2">Нет пользователей</h3>
+          <p className="text-light-500 mb-6">
             Сначала зарегистрируйте пользователя
           </p>
           <button
             onClick={onBack}
-            className="px-6 py-3 bg-accent-primary hover:bg-accent-muted text-white rounded-xl font-medium transition-all"
+            className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium"
           >
             На главную
           </button>
@@ -203,25 +197,25 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 animate-fade-in">
+    <div className="w-full max-w-2xl mx-auto px-4 animate-fade-in">
       {/* Header */}
       {stage !== LoginStage.RESULT && (
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-light-500 hover:text-light-900 transition-colors"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={20} />
             <span>Назад</span>
           </button>
 
           {stage === LoginStage.SELECT_USER && users.length > 0 && (
             <button
               onClick={clearDatabase}
-              className="text-zinc-600 hover:text-danger transition-colors"
+              className="text-light-400 hover:text-danger transition-colors"
               title="Очистить базу"
             >
-              <Trash2 size={18} />
+              <Trash2 size={20} />
             </button>
           )}
         </div>
@@ -230,37 +224,36 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
       {/* User Selection */}
       {stage === LoginStage.SELECT_USER && (
         <div className="animate-slide-up">
-          <h2 className="text-2xl font-semibold text-white mb-2">Вход</h2>
-          <p className="text-zinc-500 mb-8">Выберите профиль для аутентификации</p>
+          <h2 className="text-2xl font-bold text-light-900 mb-2">Вход в систему</h2>
+          <p className="text-light-500 mb-6">Выберите ваш профиль</p>
 
-          <div className="grid gap-3">
+          <div className="space-y-3">
             {users.map((u) => (
               <div
                 key={u.id}
-                className="flex items-center gap-4 p-4 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-xl transition-all text-left group"
+                className="flex items-center gap-4 p-4 bg-white border border-light-300 rounded-lg shadow-sm hover:border-primary-300 hover:shadow transition-all group"
               >
                 <button
                   onClick={() => handleUserSelect(u)}
-                  className="flex items-center gap-4 flex-grow"
+                  className="flex items-center gap-4 flex-grow text-left"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-dark-700 group-hover:bg-dark-600 flex items-center justify-center transition-colors">
-                    <User className="w-6 h-6 text-zinc-400" />
+                  <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+                    <User className="w-6 h-6 text-primary-600" />
                   </div>
-                  <div className="flex-grow text-left">
-                    <div className="font-medium text-white">{u.username}</div>
-                    <div className="text-xs text-zinc-500">
+                  <div className="flex-grow">
+                    <div className="font-semibold text-light-900">{u.username}</div>
+                    <div className="text-sm text-light-500">
                       Качество профиля: {u.mantraProfile?.quality ?? 'N/A'}%
                     </div>
                   </div>
                 </button>
                 <button
                   onClick={(e) => handleDeleteUser(e, u.id, u.username)}
-                  className="p-2 text-zinc-600 hover:text-danger hover:bg-danger/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                  className="p-2 text-light-400 hover:text-danger hover:bg-danger/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                   title="Удалить пользователя"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={18} />
                 </button>
-                <div className="w-2 h-2 rounded-full bg-success" />
               </div>
             ))}
           </div>
@@ -271,12 +264,9 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
       {stage === LoginStage.INPUT_MANTRA && selectedUser && (
         <div className="animate-slide-up">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-dark-800 border border-dark-600 flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-7 h-7 text-accent-primary" />
-            </div>
-            <h2 className="text-xl font-semibold text-white mb-1">Верификация</h2>
-            <p className="text-zinc-500 text-sm">
-              Пользователь: <span className="text-white">{selectedUser.username}</span>
+            <h2 className="text-xl font-bold text-light-900 mb-2">Верификация</h2>
+            <p className="text-light-500">
+              Пользователь: <span className="font-medium text-light-700">{selectedUser.username}</span>
             </p>
           </div>
 
@@ -292,14 +282,14 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
       {stage === LoginStage.INPUT_CHALLENGE && selectedUser && mantraMatch && (
         <div className="animate-slide-up">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-warning/10 border border-warning/30 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-7 h-7 text-warning" />
+            <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-warning" />
             </div>
-            <h2 className="text-xl font-semibold text-white mb-1">Дополнительная проверка</h2>
-            <p className="text-zinc-500 text-sm mb-4">
+            <h2 className="text-xl font-bold text-light-900 mb-2">Дополнительная проверка</h2>
+            <p className="text-light-500 mb-4">
               Первичный результат: {mantraMatch.confidence.toFixed(0)}%
             </p>
-            <p className="text-white font-medium">"{selectedUser.secretQuestion}"</p>
+            <p className="text-lg font-medium text-light-700">"{selectedUser.secretQuestion}"</p>
           </div>
 
           <KeystrokeInput
@@ -313,59 +303,36 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
       {/* Result */}
       {stage === LoginStage.RESULT && result && selectedUser && (
         <div className="animate-slide-up">
-          {/* Result Header */}
-          <div className={`text-center p-8 rounded-2xl border mb-6 ${
+          <div className={`text-center p-8 rounded-xl border-2 mb-6 ${
             result.status === 'GRANTED'
-              ? 'bg-success/5 border-success/20'
-              : 'bg-danger/5 border-danger/20'
+              ? 'bg-success/5 border-success'
+              : 'bg-danger/5 border-danger'
           }`}>
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
               result.status === 'GRANTED' ? 'bg-success/10' : 'bg-danger/10'
             }`}>
               {result.status === 'GRANTED' ? (
-                <CheckCircle className="w-8 h-8 text-success" />
+                <CheckCircle className="w-10 h-10 text-success" />
               ) : (
-                <XCircle className="w-8 h-8 text-danger" />
+                <XCircle className="w-10 h-10 text-danger" />
               )}
             </div>
 
-            <h2 className="text-2xl font-semibold text-white mb-2">
+            <h2 className="text-2xl font-bold text-light-900 mb-2">
               {result.status === 'GRANTED' ? 'Доступ разрешён' : 'Доступ запрещён'}
             </h2>
 
-            <div className={`text-4xl font-mono font-bold ${
+            <div className={`text-5xl font-bold font-mono ${
               result.status === 'GRANTED' ? 'text-success' : 'text-danger'
             }`}>
               {result.confidence.toFixed(0)}%
             </div>
 
-            {/* Scores */}
             {result.mantraMatch && (
-              <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs font-mono text-zinc-500">
+              <div className="mt-4 flex justify-center gap-6 text-sm text-light-500">
                 <span>Dwell: {result.mantraMatch.dwellScore.toFixed(2)}</span>
                 <span>Flight: {result.mantraMatch.flightScore.toFixed(2)}</span>
                 <span>DD: {result.mantraMatch.ddScore.toFixed(2)}</span>
-              </div>
-            )}
-
-            {/* Liveness */}
-            {result.mantraMatch && (
-              <div className={`inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full text-xs font-medium ${
-                result.mantraMatch.liveness.isHuman
-                  ? 'bg-success/10 text-success'
-                  : 'bg-danger/10 text-danger'
-              }`}>
-                {result.mantraMatch.liveness.isHuman ? (
-                  <>
-                    <UserCheck size={14} />
-                    Human: {(result.mantraMatch.liveness.score * 100).toFixed(0)}%
-                  </>
-                ) : (
-                  <>
-                    <Bot size={14} />
-                    Bot detected
-                  </>
-                )}
               </div>
             )}
           </div>
@@ -391,11 +358,10 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex justify-center mt-8">
             <button
               onClick={resetFlow}
-              className="px-8 py-3 bg-accent-primary hover:bg-accent-muted text-white rounded-xl font-medium transition-all"
+              className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium"
             >
               Завершить
             </button>

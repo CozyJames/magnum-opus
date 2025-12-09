@@ -1,6 +1,5 @@
 // ============================================================================
-// MAGNUM OPUS v3.0 — Keystroke Input Component
-// Captures precise timing data for biometric analysis
+// MAGNUM OPUS v3.0 — Keystroke Input Component (Light Theme)
 // ============================================================================
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -29,7 +28,7 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
   const pendingKeyDown = useRef<Map<string, { time: number; char: string; position: number }>>(new Map());
   const inputRef = useRef<HTMLInputElement>(null);
   const completedRef = useRef(false);
-  const nextPositionRef = useRef(0); // Track position independently of React state
+  const nextPositionRef = useRef(0);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -74,7 +73,6 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
         keyUpTime: now,
       };
 
-      // Use the position that was captured at keyDown time
       if (pending.position < targetText.length) {
         keystrokesRef.current[pending.position] = keystroke;
       }
@@ -91,7 +89,7 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
 
     if (newVal.length < oldVal.length) {
       keystrokesRef.current = keystrokesRef.current.slice(0, newVal.length);
-      nextPositionRef.current = newVal.length; // Sync position with actual input length
+      nextPositionRef.current = newVal.length;
       setErrors(prev => prev.filter(idx => idx < newVal.length));
       setInputText(newVal);
       return;
@@ -128,38 +126,34 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
     setTimeout(() => {
       const now = performance.now();
 
-      // First, flush any pending keyDown events that didn't get keyUp
       pendingKeyDown.current.forEach((pending, code) => {
         if (pending.position < targetText.length && !keystrokesRef.current[pending.position]) {
           keystrokesRef.current[pending.position] = {
             char: pending.char,
             code: code,
             keyDownTime: pending.time,
-            keyUpTime: now, // Assume released now
+            keyUpTime: now,
           };
         }
       });
 
-      // Build complete keystrokes array, filling gaps with estimates
       const completeKeystrokes: RawKeystroke[] = [];
-      let lastKeyUpTime = now - (targetText.length * 100); // Estimate start time
+      let lastKeyUpTime = now - (targetText.length * 100);
 
       for (let i = 0; i < targetText.length; i++) {
         const ks = keystrokesRef.current[i];
         if (ks) {
-          // Fix any missing keyUpTime
           if (!ks.keyUpTime || ks.keyUpTime <= ks.keyDownTime) {
-            ks.keyUpTime = ks.keyDownTime + 100; // Estimate 100ms dwell
+            ks.keyUpTime = ks.keyDownTime + 100;
           }
           completeKeystrokes.push(ks);
           lastKeyUpTime = ks.keyUpTime;
         } else {
-          // Create placeholder for missing keystroke with estimated timing
           completeKeystrokes.push({
             char: targetText[i],
             code: `Key${targetText[i].toUpperCase()}`,
-            keyDownTime: lastKeyUpTime + 50, // Estimate 50ms flight
-            keyUpTime: lastKeyUpTime + 150,  // Estimate 100ms dwell
+            keyDownTime: lastKeyUpTime + 50,
+            keyUpTime: lastKeyUpTime + 150,
           });
           lastKeyUpTime = lastKeyUpTime + 150;
         }
@@ -167,7 +161,7 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
 
       const timings = extractTimings(completeKeystrokes);
       onComplete(timings, completeKeystrokes);
-    }, 200); // Increased timeout
+    }, 200);
   };
 
   const reset = () => {
@@ -190,14 +184,13 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
       let charClass = 'inline-block transition-colors duration-100 ';
 
       if (!typed) {
-        charClass += 'text-zinc-600';
+        charClass += 'text-light-400';
       } else if (isError || typed.toLowerCase() !== char.toLowerCase()) {
-        charClass += 'text-danger';
+        charClass += 'text-danger font-medium';
       } else {
-        charClass += 'text-white';
+        charClass += 'text-light-900';
       }
 
-      // Пробелы рендерим как неразрывные, чтобы они не схлопывались
       const rawChar = typed || char;
       const displayChar = isMasked && typed ? '•' : (rawChar === ' ' ? '\u00A0' : rawChar);
 
@@ -205,7 +198,7 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
         <span key={index} className={charClass} style={{ minWidth: char === ' ' ? '0.5em' : undefined }}>
           {displayChar}
           {isCurrent && !typed && (
-            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-accent-primary animate-pulse" />
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500 animate-pulse" />
           )}
         </span>
       );
@@ -216,29 +209,26 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
 
   return (
     <div className="w-full">
-      {/* Label */}
       {label && (
-        <div className="mb-4">
-          <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+        <div className="mb-3">
+          <span className="text-sm font-medium text-light-700">
             {label}
           </span>
         </div>
       )}
 
-      {/* Input Container */}
       <div
         className={`
-          relative bg-dark-800 border rounded-xl p-6 cursor-text transition-all
+          relative bg-white border-2 rounded-lg p-6 cursor-text transition-all shadow-sm
           ${errors.length > 0
-            ? 'border-danger/50'
+            ? 'border-danger'
             : isComplete
-              ? 'border-success/50'
-              : 'border-dark-600 focus-within:border-accent-primary/50'
+              ? 'border-success'
+              : 'border-light-300 focus-within:border-primary-500'
           }
         `}
         onClick={() => inputRef.current?.focus()}
       >
-        {/* Hidden Input */}
         <input
           ref={inputRef}
           type="text"
@@ -255,45 +245,44 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
           spellCheck="false"
         />
 
-        {/* Rendered Text */}
-        <div className="text-xl md:text-2xl font-mono tracking-wide leading-relaxed text-center relative">
+        <div className="text-xl font-mono tracking-wide leading-relaxed text-center relative">
           {renderOverlay()}
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="h-1 w-full bg-dark-700 rounded-full mt-3 overflow-hidden">
+      <div className="h-2 w-full bg-light-200 rounded-full mt-4 overflow-hidden">
         <div
           className={`h-full transition-all duration-200 rounded-full ${
             errors.length > 0
               ? 'bg-danger'
               : isComplete
                 ? 'bg-success'
-                : 'bg-accent-primary'
+                : 'bg-primary-500'
           }`}
           style={{ width: `${progressPercent}%` }}
         />
       </div>
 
-      {/* Status Bar */}
+      {/* Status */}
       <div className="flex justify-between items-center mt-3">
-        <div className="text-xs font-mono">
+        <div className="text-sm">
           {errors.length > 0 ? (
-            <span className="text-danger">Ошибка — нажмите Backspace</span>
+            <span className="text-danger font-medium">Ошибка — нажмите Backspace</span>
           ) : isComplete ? (
-            <span className="text-success">Готово</span>
+            <span className="text-success font-medium">Готово!</span>
           ) : (
-            <span className="text-zinc-500">
-              {inputText.length} / {targetText.length}
+            <span className="text-light-500">
+              Введено: {inputText.length} из {targetText.length}
             </span>
           )}
         </div>
 
         <button
           onClick={(e) => { e.stopPropagation(); reset(); }}
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-sm text-light-500 hover:text-primary-600 transition-colors"
         >
-          <RotateCcw size={12} />
+          <RotateCcw size={14} />
           <span>Сброс</span>
         </button>
       </div>
