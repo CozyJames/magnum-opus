@@ -1,19 +1,39 @@
 // ============================================================================
 // MAGNUM OPUS v3.0 — Main Application Component
-// Система биометрической аутентификации | МИРЭА, Кафедра КБ-1
+// Система биометрической аутентификации | РТУ МИРЭА, Кафедра КБ-1
 // ============================================================================
 
 import React, { useState } from 'react';
 import { AppState } from './types';
 import RegistrationFlow from './components/RegistrationFlow';
 import LoginFlow from './components/LoginFlow';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Phone, Mail, User } from 'lucide-react';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.HOME);
 
   return (
     <div className="min-h-screen bg-light-100 text-light-900 font-sans flex flex-col">
+      {/* Header with Authors */}
+      <header className="py-3 px-6 border-b border-light-200 bg-white">
+        <div className="max-w-5xl mx-auto flex justify-between items-start">
+          <div className="text-sm text-light-600">
+            <span className="font-medium text-light-800">РТУ МИРЭА</span>
+            <span className="mx-2 text-light-300">|</span>
+            <span>Кафедра КБ-1</span>
+          </div>
+          <div className="text-right text-sm">
+            <div className="text-light-500 mb-1">Авторы проекта:</div>
+            <div className="text-light-700 font-medium">
+              Ланцков Дмитрий, Мусаев Максим, Соболев Иван
+            </div>
+            <div className="text-light-500 text-xs mt-0.5">
+              Группа БАСО-04-23
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Main Content */}
       <div className="flex-grow flex flex-col">
         {appState === AppState.HOME ? (
@@ -63,9 +83,8 @@ const App: React.FC = () => {
             </div>
 
             {/* University Info */}
-            <div className="text-center text-light-500 text-sm space-y-1">
+            <div className="text-center text-light-500 text-sm">
               <p className="font-medium text-light-700">МИРЭА — Российский технологический университет</p>
-              <p>Кафедра КБ-1</p>
             </div>
           </div>
         ) : (
@@ -84,14 +103,35 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer with Contacts */}
       <footer className="py-4 px-6 border-t border-light-300 bg-white">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-light-500">
-          <div>
-            Разработчики: Ланцков Д., Мусаев М., Соболев И.
-          </div>
-          <div className="text-light-400">
-            МИРЭА, 2024
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            {/* Contacts */}
+            <div className="text-sm">
+              <div className="text-light-500 mb-2 font-medium">Контакты:</div>
+              <div className="flex flex-col sm:flex-row gap-3 text-light-600">
+                <div className="flex items-center gap-2">
+                  <User size={14} className="text-light-400" />
+                  <span>Максим Михайлович М.</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone size={14} className="text-light-400" />
+                  <span>8 964 335-38-38</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail size={14} className="text-light-400" />
+                  <a href="mailto:maksimka_musaev93@mail.ru" className="hover:text-primary-600">
+                    maksimka_musaev93@mail.ru
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Copyright */}
+            <div className="text-sm text-light-400">
+              РТУ МИРЭА, 2025
+            </div>
           </div>
         </div>
       </footer>
