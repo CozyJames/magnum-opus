@@ -135,8 +135,9 @@ export const QUALITY_THRESHOLDS = {
 
 /**
  * Minimum profile quality required to complete registration
+ * Lowered for educational use - allows more typing variance
  */
-export const MIN_PROFILE_QUALITY = 35;
+export const MIN_PROFILE_QUALITY = 20;
 
 // ============================================================================
 // UI CONSTANTS
