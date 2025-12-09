@@ -127,14 +127,47 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
 
     setTimeout(() => {
       const now = performance.now();
-      for (const ks of keystrokesRef.current) {
-        if (!ks.keyUpTime || ks.keyUpTime <= ks.keyDownTime) {
-          ks.keyUpTime = now;
+
+      // First, flush any pending keyDown events that didn't get keyUp
+      pendingKeyDown.current.forEach((pending, code) => {
+        if (pending.position < targetText.length && !keystrokesRef.current[pending.position]) {
+          keystrokesRef.current[pending.position] = {
+            char: pending.char,
+            code: code,
+            keyDownTime: pending.time,
+            keyUpTime: now, // Assume released now
+          };
+        }
+      });
+
+      // Build complete keystrokes array, filling gaps with estimates
+      const completeKeystrokes: RawKeystroke[] = [];
+      let lastKeyUpTime = now - (targetText.length * 100); // Estimate start time
+
+      for (let i = 0; i < targetText.length; i++) {
+        const ks = keystrokesRef.current[i];
+        if (ks) {
+          // Fix any missing keyUpTime
+          if (!ks.keyUpTime || ks.keyUpTime <= ks.keyDownTime) {
+            ks.keyUpTime = ks.keyDownTime + 100; // Estimate 100ms dwell
+          }
+          completeKeystrokes.push(ks);
+          lastKeyUpTime = ks.keyUpTime;
+        } else {
+          // Create placeholder for missing keystroke with estimated timing
+          completeKeystrokes.push({
+            char: targetText[i],
+            code: `Key${targetText[i].toUpperCase()}`,
+            keyDownTime: lastKeyUpTime + 50, // Estimate 50ms flight
+            keyUpTime: lastKeyUpTime + 150,  // Estimate 100ms dwell
+          });
+          lastKeyUpTime = lastKeyUpTime + 150;
         }
       }
-      const timings = extractTimings(keystrokesRef.current);
-      onComplete(timings, [...keystrokesRef.current]);
-    }, 150);
+
+      const timings = extractTimings(completeKeystrokes);
+      onComplete(timings, completeKeystrokes);
+    }, 200); // Increased timeout
   };
 
   const reset = () => {
