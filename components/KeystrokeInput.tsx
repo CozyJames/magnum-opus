@@ -159,10 +159,12 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
         charClass += 'text-white';
       }
 
-      const displayChar = isMasked && typed ? '•' : (typed || char);
+      // Пробелы рендерим как неразрывные, чтобы они не схлопывались
+      const rawChar = typed || char;
+      const displayChar = isMasked && typed ? '•' : (rawChar === ' ' ? '\u00A0' : rawChar);
 
       return (
-        <span key={index} className={charClass}>
+        <span key={index} className={charClass} style={{ minWidth: char === ' ' ? '0.5em' : undefined }}>
           {displayChar}
           {isCurrent && !typed && (
             <span className="absolute bottom-0 left-0 w-full h-0.5 bg-accent-primary animate-pulse" />

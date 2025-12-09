@@ -20,7 +20,7 @@ import {
   MIN_CONFIDENCE_ACCEPT,
   MIN_CONFIDENCE_CHALLENGE,
 } from '../constants';
-import { getUsers, resetDatabase } from '../services/storage';
+import { getUsers, resetDatabase, deleteUser } from '../services/storage';
 import { calculateMatch, distanceToConfidence } from '../services/biometrics';
 import KeystrokeInput from './KeystrokeInput';
 import ResultChart from './ResultChart';
@@ -154,6 +154,14 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
     }
   };
 
+  const handleDeleteUser = async (e: React.MouseEvent, userId: string, username: string) => {
+    e.stopPropagation();
+    if (confirm(`Удалить пользователя "${username}"?`)) {
+      await deleteUser(userId);
+      loadUsers();
+    }
+  };
+
   const resetFlow = () => {
     setResult(null);
     setMantraMatch(null);
@@ -227,22 +235,33 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ onBack }) => {
 
           <div className="grid gap-3">
             {users.map((u) => (
-              <button
+              <div
                 key={u.id}
-                onClick={() => handleUserSelect(u)}
                 className="flex items-center gap-4 p-4 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-xl transition-all text-left group"
               >
-                <div className="w-12 h-12 rounded-xl bg-dark-700 group-hover:bg-dark-600 flex items-center justify-center transition-colors">
-                  <User className="w-6 h-6 text-zinc-400" />
-                </div>
-                <div className="flex-grow">
-                  <div className="font-medium text-white">{u.username}</div>
-                  <div className="text-xs text-zinc-500">
-                    Качество профиля: {u.mantraProfile?.quality ?? 'N/A'}%
+                <button
+                  onClick={() => handleUserSelect(u)}
+                  className="flex items-center gap-4 flex-grow"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-dark-700 group-hover:bg-dark-600 flex items-center justify-center transition-colors">
+                    <User className="w-6 h-6 text-zinc-400" />
                   </div>
-                </div>
+                  <div className="flex-grow text-left">
+                    <div className="font-medium text-white">{u.username}</div>
+                    <div className="text-xs text-zinc-500">
+                      Качество профиля: {u.mantraProfile?.quality ?? 'N/A'}%
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={(e) => handleDeleteUser(e, u.id, u.username)}
+                  className="p-2 text-zinc-600 hover:text-danger hover:bg-danger/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                  title="Удалить пользователя"
+                >
+                  <Trash2 size={16} />
+                </button>
                 <div className="w-2 h-2 rounded-full bg-success" />
-              </button>
+              </div>
             ))}
           </div>
         </div>
