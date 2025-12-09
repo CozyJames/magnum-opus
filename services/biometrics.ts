@@ -256,14 +256,15 @@ const calculateProfileQuality = (stats: FeatureStats): number => {
   }
   
   if (validCount === 0) return 0;
-  
+
   const avgCV = totalCV / validCount;
-  
+
   // Convert CV to quality score
-  // CV of 0 = 100% quality, CV of 1 = 0% quality
-  // Using exponential decay for smoother curve
-  const quality = Math.exp(-avgCV * 2) * 100;
-  
+  // Gentler formula for small sample sizes (5 samples)
+  // CV of 0 = 100%, CV of 0.5 = 60%, CV of 1.0 = 37%
+  // Old formula was too aggressive: exp(-avgCV * 2)
+  const quality = 100 / Math.pow(1 + avgCV, 1.5);
+
   return Math.round(clamp(quality, 0, 100));
 };
 

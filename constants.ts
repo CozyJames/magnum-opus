@@ -135,8 +135,9 @@ export const QUALITY_THRESHOLDS = {
 
 /**
  * Minimum profile quality required to complete registration
+ * With gentler quality formula, 30% is reasonable for 5-sample calibration
  */
-export const MIN_PROFILE_QUALITY = 35;
+export const MIN_PROFILE_QUALITY = 30;
 
 // ============================================================================
 // UI CONSTANTS
