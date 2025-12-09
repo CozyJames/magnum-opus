@@ -26,9 +26,10 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
   const [isComplete, setIsComplete] = useState(false);
 
   const keystrokesRef = useRef<RawKeystroke[]>([]);
-  const pendingKeyDown = useRef<Map<string, { time: number; char: string }>>(new Map());
+  const pendingKeyDown = useRef<Map<string, { time: number; char: string; position: number }>>(new Map());
   const inputRef = useRef<HTMLInputElement>(null);
   const completedRef = useRef(false);
+  const nextPositionRef = useRef(0); // Track position independently of React state
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -49,15 +50,17 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
     if (e.key === 'Backspace') {
       return;
     }
-    if (completedRef.current || inputText.length >= targetText.length) {
+    if (completedRef.current || nextPositionRef.current >= targetText.length) {
       e.preventDefault();
       return;
     }
 
     const now = performance.now();
-    const expectedChar = targetText[inputText.length];
-    pendingKeyDown.current.set(e.code, { time: now, char: expectedChar });
-  }, [inputText, targetText]);
+    const position = nextPositionRef.current;
+    const expectedChar = targetText[position];
+    pendingKeyDown.current.set(e.code, { time: now, char: expectedChar, position });
+    nextPositionRef.current = position + 1;
+  }, [targetText]);
 
   const handleKeyUp = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     const now = performance.now();
@@ -71,9 +74,9 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
         keyUpTime: now,
       };
 
-      const position = keystrokesRef.current.length;
-      if (position < targetText.length) {
-        keystrokesRef.current[position] = keystroke;
+      // Use the position that was captured at keyDown time
+      if (pending.position < targetText.length) {
+        keystrokesRef.current[pending.position] = keystroke;
       }
 
       pendingKeyDown.current.delete(e.code);
@@ -88,6 +91,7 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
 
     if (newVal.length < oldVal.length) {
       keystrokesRef.current = keystrokesRef.current.slice(0, newVal.length);
+      nextPositionRef.current = newVal.length; // Sync position with actual input length
       setErrors(prev => prev.filter(idx => idx < newVal.length));
       setInputText(newVal);
       return;
@@ -140,6 +144,7 @@ const KeystrokeInput: React.FC<KeystrokeInputProps> = ({
     keystrokesRef.current = [];
     pendingKeyDown.current.clear();
     completedRef.current = false;
+    nextPositionRef.current = 0;
     inputRef.current?.focus();
   };
 

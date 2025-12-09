@@ -96,19 +96,24 @@ const robustMean = (values: number[]): number => {
 };
 
 /**
- * Transpose a 2D array
- * [[a,b,c], [d,e,f]] -> [[a,d], [b,e], [c,f]]
+ * Transpose a 2D array, handling jagged arrays
+ * Uses maximum row length to preserve all data
+ * [[a,b,c], [d,e]] -> [[a,d], [b,e], [c,undefined]]
  */
 const transpose = <T>(matrix: T[][]): T[][] => {
   if (matrix.length === 0) return [];
+
+  // Use MAXIMUM length across all rows, not just first row
+  const cols = Math.max(...matrix.map(row => row.length));
   const rows = matrix.length;
-  const cols = matrix[0].length;
-  
+
   const result: T[][] = [];
   for (let c = 0; c < cols; c++) {
     result[c] = [];
     for (let r = 0; r < rows; r++) {
-      result[c][r] = matrix[r][c];
+      if (matrix[r][c] !== undefined) {
+        result[c].push(matrix[r][c]);
+      }
     }
   }
   return result;
