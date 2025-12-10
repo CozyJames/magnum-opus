@@ -1,8 +1,3 @@
-// ============================================================================
-// MAGNUM OPUS v2.0 — Backend Server
-// Simple Express server for user profile storage
-// ============================================================================
-
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
@@ -12,22 +7,13 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const DB_FILE = path.join(__dirname, 'database.json');
 
-// ============================================================================
-// Middleware
-// ============================================================================
-
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // Increased for biometric data
+app.use(express.json({ limit: '10mb' }));
 
-// Request logging
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
-
-// ============================================================================
-// Database Helpers
-// ============================================================================
 
 const readDb = () => {
   try {
@@ -52,16 +38,10 @@ const writeDb = (data) => {
   }
 };
 
-// ============================================================================
-// Routes
-// ============================================================================
-
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '2.0.0', timestamp: Date.now() });
 });
 
-// Get all users
 app.get('/api/users', (req, res) => {
   try {
     const users = readDb();
@@ -71,51 +51,46 @@ app.get('/api/users', (req, res) => {
   }
 });
 
-// Get single user by ID
 app.get('/api/users/:id', (req, res) => {
   try {
     const users = readDb();
     const user = users.find(u => u.id === req.params.id);
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Failed to read database' });
   }
 });
 
-// Register new user
 app.post('/api/register', (req, res) => {
   try {
     const newUser = req.body;
     const users = readDb();
-    
-    // Validation: Check required fields
+
     if (!newUser.username || !newUser.id) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
-    // Validation: Check if username exists
+
     const existingUser = users.find(
       u => u.username.toLowerCase() === newUser.username.toLowerCase()
     );
-    
+
     if (existingUser) {
       return res.status(400).json({ error: 'Username already taken' });
     }
-    
-    // Add user
+
     users.push(newUser);
-    
+
     if (writeDb(users)) {
       console.log(`[REGISTER] New user: ${newUser.username} (${newUser.id})`);
-      res.status(201).json({ 
-        message: 'User created', 
+      res.status(201).json({
+        message: 'User created',
         userId: newUser.id,
-        username: newUser.username 
+        username: newUser.username
       });
     } else {
       res.status(500).json({ error: 'Failed to save user' });
@@ -126,18 +101,17 @@ app.post('/api/register', (req, res) => {
   }
 });
 
-// Update user
 app.put('/api/users/:id', (req, res) => {
   try {
     const users = readDb();
     const index = users.findIndex(u => u.id === req.params.id);
-    
+
     if (index === -1) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     users[index] = { ...users[index], ...req.body };
-    
+
     if (writeDb(users)) {
       res.json({ message: 'User updated', user: users[index] });
     } else {
@@ -148,36 +122,34 @@ app.put('/api/users/:id', (req, res) => {
   }
 });
 
-// Check username availability
 app.post('/api/check-username', (req, res) => {
   try {
     const { username } = req.body;
-    
+
     if (!username) {
       return res.status(400).json({ error: 'Username required' });
     }
-    
+
     const users = readDb();
     const exists = users.some(
       u => u.username.toLowerCase() === username.toLowerCase()
     );
-    
+
     res.json({ exists });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Delete user
 app.delete('/api/users/:id', (req, res) => {
   try {
     const users = readDb();
     const filtered = users.filter(u => u.id !== req.params.id);
-    
+
     if (filtered.length === users.length) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     if (writeDb(filtered)) {
       console.log(`[DELETE] User removed: ${req.params.id}`);
       res.json({ message: 'User deleted' });
@@ -189,7 +161,6 @@ app.delete('/api/users/:id', (req, res) => {
   }
 });
 
-// Clear database (dangerous!)
 app.delete('/api/reset', (req, res) => {
   try {
     if (writeDb([])) {
@@ -202,10 +173,6 @@ app.delete('/api/reset', (req, res) => {
     res.status(500).json({ error: 'Failed to reset' });
   }
 });
-
-// ============================================================================
-// Start Server
-// ============================================================================
 
 app.listen(PORT, () => {
   console.log('');
